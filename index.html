@@ -1,1 +1,572 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NK STREAM PRO</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #080d16;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  background: #101a2b;
+  padding: 17px;
+  text-align: center;
+  border-bottom: 2px solid #00d2a0;
+}
+
+header h1 {
+  color: #00e6aa;
+  margin: 0;
+  font-size: 25px;
+}
+
+header p {
+  margin: 6px 0 0;
+  color: #b5c4d8;
+  font-size: 12px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+.tabs button {
+  background: #172438;
+  color: white;
+  border: 1px solid #2c405c;
+  padding: 12px;
+  border-radius: 9px;
+  min-width: 90px;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: #00b98b;
+  color: #06130f;
+  font-weight: bold;
+}
+
+.container {
+  padding: 12px;
+}
+
+.playerbox {
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #26364c;
+}
+
+video {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+  display: block;
+}
+
+.nowplaying {
+  padding: 12px;
+  background: #121e30;
+}
+
+#channelTitle {
+  color: #00e6aa;
+  font-weight: bold;
+  font-size: 17px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.controls button,
+.controls select {
+  background: #1c2b41;
+  color: white;
+  border: 1px solid #344a67;
+  border-radius: 7px;
+  padding: 10px;
+}
+
+.section {
+  background: #111c2d;
+  padding: 13px;
+  margin-top: 14px;
+  border-radius: 11px;
+}
+
+.section h3 {
+  margin-top: 0;
+  color: #00e6aa;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  background: #091321;
+  border: 1px solid #2b405d;
+  color: white;
+  margin-bottom: 8px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.loadbtn {
+  background: #00b98b;
+  color: #04130f;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  width: 100%;
+  margin-bottom: 7px;
+}
+
+.secondary {
+  background: #24354c;
+  color: white;
+}
+
+.channelList {
+  margin-top: 12px;
+}
+
+.channel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: #16243a;
+  margin-bottom: 6px;
+  border-radius: 8px;
+}
+
+.channel button {
+  background: transparent;
+  color: white;
+  border: none;
+  text-align: left;
+  flex: 1;
+  padding: 8px;
+}
+
+.channel .fav {
+  color: #ffd45c;
+  font-size: 20px;
+}
+
+.small {
+  font-size: 12px;
+  color: #9fb0c5;
+}
+
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #7e91a8;
+  font-size: 12px;
+}
+
+.hidden {
+  display: none;
+}
+
+#status {
+  font-size: 12px;
+  color: #ffd45c;
+  padding: 6px 0;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>NK STREAM PRO</h1>
+  <p>SPORTS • NEWS • MOVIES</p>
+</header>
+
+<div class="tabs">
+  <button class="active" onclick="loadCategory('sports',this)">🏏 Sports</button>
+  <button onclick="loadCategory('news',this)">📰 News</button>
+  <button onclick="loadCategory('movies',this)">🎬 Movies</button>
+  <button onclick="loadCategory('all',this)">🌍 All Channels</button>
+  <button onclick="showFavorites(this)">⭐ Favorites</button>
+</div>
+
+<div class="container">
+
+<div class="playerbox">
+  <video id="video" controls playsinline></video>
+</div>
+
+<div class="nowplaying">
+  <div id="channelTitle">NK STREAM PRO PLAYER</div>
+  <div id="status">Choose a channel to start.</div>
+
+  <div class="controls">
+    <button onclick="previousChannel()">⏮ Previous</button>
+    <button onclick="nextChannel()">⏭ Next</button>
+    <button onclick="toggleFullscreen()">⛶ Full Screen</button>
+    <select id="quality" onchange="changeQuality()">
+      <option value="-1">Auto Quality</option>
+    </select>
+  </div>
+</div>
+
+<div class="section">
+<h3>📡 Add M3U Playlist</h3>
+
+<input id="playlistURL"
+placeholder="Paste M3U / M3U8 playlist URL here">
+
+<button class="loadbtn" onclick="loadCustomURL()">
+Load Playlist URL
+</button>
+
+<button class="loadbtn secondary"
+onclick="document.getElementById('fileInput').click()">
+📁 Upload M3U File
+</button>
+
+<input type="file"
+id="fileInput"
+accept=".m3u,.m3u8,.txt"
+class="hidden"
+onchange="loadFile(event)">
+
+<p class="small">
+You can add your own playlist URL or upload a playlist file.
+</p>
+</div>
+
+<div class="section">
+<h3>🔍 Search Channels</h3>
+<input id="search"
+placeholder="Search channel..."
+oninput="searchChannels()">
+</div>
+
+<div class="section">
+<h3 id="listHeading">🏏 Channels</h3>
+<div id="channelList" class="channelList"></div>
+</div>
+
+</div>
+
+<footer>
+NK STREAM PRO • Personal IPTV Player
+</footer>
+
+<script>
+
+const playlists = {
+  sports: "https://iptv-org.github.io/iptv/categories/sports.m3u",
+  news: "https://iptv-org.github.io/iptv/categories/news.m3u",
+  movies: "https://iptv-org.github.io/iptv/categories/movies.m3u",
+  all: "https://iptv-org.github.io/iptv/index.m3u"
+};
+
+let channels = [];
+let currentIndex = -1;
+let favorites = JSON.parse(localStorage.getItem("nk_favorites") || "[]");
+let hls = null;
+let currentTab = "sports";
+let showingFavorites = false;
+
+const video = document.getElementById("video");
+
+function setStatus(msg) {
+  document.getElementById("status").textContent = msg;
+}
+
+async function loadCategory(category, button) {
+
+  showingFavorites = false;
+  currentTab = category;
+
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+  if (button) button.classList.add("active");
+
+  document.getElementById("listHeading").textContent =
+    category.toUpperCase() + " CHANNELS";
+
+  setStatus("Loading playlist...");
+
+  try {
+    const response = await fetch(playlists[category]);
+
+    if (!response.ok) throw new Error("Playlist could not be loaded");
+
+    const text = await response.text();
+
+    channels = parseM3U(text);
+    currentIndex = -1;
+
+    renderChannels(channels);
+
+    setStatus(channels.length + " channels loaded");
+
+  } catch (error) {
+    setStatus("Could not load playlist. Try again or upload a file.");
+    document.getElementById("channelList").innerHTML =
+      "<p>Playlist load failed. You can upload an M3U file or try another URL.</p>";
+  }
+}
+
+function parseM3U(text) {
+
+  const lines = text.split(/\r?\n/);
+  const result = [];
+  let name = "Unknown Channel";
+
+  for (let line of lines) {
+
+    line = line.trim();
+
+    if (line.startsWith("#EXTINF")) {
+      const comma = line.lastIndexOf(",");
+      name = comma >= 0 ? line.substring(comma + 1).trim() : "Channel";
+    }
+
+    else if (line && !line.startsWith("#")) {
+      result.push({
+        name: name,
+        url: line
+      });
+
+      name = "Unknown Channel";
+    }
+  }
+
+  return result;
+}
+
+function renderChannels(list) {
+
+  const box = document.getElementById("channelList");
+  box.innerHTML = "";
+
+  list.slice(0, 1000).forEach((channel) => {
+
+    const realIndex = channels.indexOf(channel);
+
+    const row = document.createElement("div");
+    row.className = "channel";
+
+    const playButton = document.createElement("button");
+    playButton.textContent = "▶ " + channel.name;
+    playButton.onclick = () => playChannel(realIndex);
+
+    const favButton = document.createElement("button");
+    favButton.className = "fav";
+    favButton.textContent = favorites.includes(channel.url) ? "★" : "☆";
+    favButton.onclick = () => toggleFavorite(channel, favButton);
+
+    row.appendChild(playButton);
+    row.appendChild(favButton);
+
+    box.appendChild(row);
+  });
+}
+
+function playChannel(index) {
+
+  if (index < 0 || index >= channels.length) return;
+
+  currentIndex = index;
+  const channel = channels[index];
+
+  document.getElementById("channelTitle").textContent = channel.name;
+  setStatus("Opening stream...");
+
+  if (hls) {
+    hls.destroy();
+    hls = null;
+  }
+
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
+
+  if (channel.url.includes(".m3u8") && Hls.isSupported()) {
+
+    hls = new Hls();
+
+    hls.loadSource(channel.url);
+    hls.attachMedia(video);
+
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(() => {});
+      setStatus("Stream ready");
+      populateQuality();
+    });
+
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      if (data.fatal) setStatus("Stream unavailable");
+    });
+
+  } else {
+
+    video.src = channel.url;
+
+    video.play()
+      .then(() => setStatus("Playing"))
+      .catch(() => setStatus("Press Play or stream may be unavailable"));
+  }
+}
+
+function populateQuality() {
+
+  const select = document.getElementById("quality");
+  select.innerHTML = '<option value="-1">Auto Quality</option>';
+
+  if (!hls || !hls.levels) return;
+
+  hls.levels.forEach((level, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = level.height
+      ? level.height + "p"
+      : "Level " + (index + 1);
+
+    select.appendChild(option);
+  });
+}
+
+function changeQuality() {
+
+  if (!hls) return;
+
+  hls.currentLevel = Number(document.getElementById("quality").value);
+}
+
+function nextChannel() {
+  if (channels.length === 0) return;
+  playChannel((currentIndex + 1) % channels.length);
+}
+
+function previousChannel() {
+  if (channels.length === 0) return;
+  playChannel((currentIndex - 1 + channels.length) % channels.length);
+}
+
+function toggleFullscreen() {
+
+  const box = document.querySelector(".playerbox");
+
+  if (box.requestFullscreen) box.requestFullscreen();
+  else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+}
+
+function toggleFavorite(channel, button) {
+
+  if (favorites.includes(channel.url)) {
+    favorites = favorites.filter(url => url !== channel.url);
+    button.textContent = "☆";
+  } else {
+    favorites.push(channel.url);
+    button.textContent = "★";
+  }
+
+  localStorage.setItem("nk_favorites", JSON.stringify(favorites));
+}
+
+function showFavorites(button) {
+
+  showingFavorites = true;
+
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+  button.classList.add("active");
+
+  const favChannels = channels.filter(c => favorites.includes(c.url));
+
+  document.getElementById("listHeading").textContent = "⭐ Favorites";
+
+  renderChannels(favChannels);
+}
+
+function searchChannels() {
+
+  const query = document.getElementById("search").value.toLowerCase();
+
+  const filtered = channels.filter(c =>
+    c.name.toLowerCase().includes(query)
+  );
+
+  renderChannels(filtered);
+}
+
+function loadCustomURL() {
+
+  const url = document.getElementById("playlistURL").value.trim();
+
+  if (!url) {
+    setStatus("Please enter a playlist URL");
+    return;
+  }
+
+  setStatus("Loading custom playlist...");
+
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error();
+      return response.text();
+    })
+    .then(text => {
+      channels = parseM3U(text);
+      currentIndex = -1;
+      renderChannels(channels);
+      document.getElementById("listHeading").textContent = "CUSTOM PLAYLIST";
+      setStatus(channels.length + " channels loaded");
+    })
+    .catch(() => {
+      setStatus("Playlist failed to load. Server may block access.");
+    });
+}
+
+function loadFile(event) {
+
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    channels = parseM3U(e.target.result);
+    currentIndex = -1;
+    renderChannels(channels);
+    document.getElementById("listHeading").textContent = file.name;
+    setStatus(channels.length + " channels loaded from file");
+  };
+
+  reader.readAsText(file);
+}
+
+</script>
+
+</body>
+</html>
